@@ -123,12 +123,26 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     if (!manualCodeInput.trim()) return;
 
     const query = manualCodeInput.trim().toLowerCase();
-    const matched = displayTickets.find(
+    
+    // Search globally across ALL tickets first
+    const matchedGlobal = tickets.find(
       t => t.ticketId.toLowerCase().includes(query) || t.qrPayload.toLowerCase().includes(query)
     );
 
-    if (matched) {
-      handleValidate(matched.ticketId);
+    if (matchedGlobal) {
+      // Check if it belongs to the currently selected venue
+      const belongsToVenue = displayTickets.some(t => t.ticketId === matchedGlobal.ticketId);
+      
+      if (!belongsToVenue) {
+        setFeedback({
+          type: 'warning',
+          title: `Attenzione: Pass valido, ma appartiene a un altro locale (${matchedGlobal.venueName})`,
+          ticket: matchedGlobal,
+        });
+        return;
+      }
+      
+      handleValidate(matchedGlobal.ticketId);
       setManualCodeInput('');
     } else {
       setFeedback({
@@ -252,35 +266,40 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
 
             {/* Viewfinder */}
             <div className="relative aspect-4/3 w-full bg-slate-950 rounded-2xl overflow-hidden flex items-center justify-center border border-slate-800">
-              {isCameraActive ? (
-                <video
-                  ref={videoRef}
-                  playsInline
-                  autoPlay
-                  muted
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="text-center p-6 text-slate-400">
+              <video
+                ref={videoRef}
+                playsInline
+                autoPlay
+                muted
+                className={`w-full h-full object-cover ${isCameraActive ? 'block' : 'hidden'}`}
+                onLoadedMetadata={(e) => {
+                  (e.target as HTMLVideoElement).play().catch(() => {});
+                }}
+              />
+              
+              {!isCameraActive && (
+                <div className="text-center p-6 text-slate-400 absolute inset-0 flex flex-col items-center justify-center">
                   <ScanLine className="w-10 h-10 text-slate-600 mx-auto mb-2" />
                   <p className="text-sm font-semibold text-slate-300">Mirino Attivo</p>
                 </div>
               )}
 
               {/* Viewfinder Target */}
-              <div className="absolute inset-8 pointer-events-none flex flex-col justify-between">
-                <div className="flex justify-between">
-                  <div className="w-6 h-6 border-t-2 border-l-2 border-emerald-400 rounded-tl-lg" />
-                  <div className="w-6 h-6 border-t-2 border-r-2 border-emerald-400 rounded-tr-lg" />
-                </div>
-                
-                <div className="w-full h-0.5 bg-linear-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_8px_#34d399] animate-bounce" />
+              {isCameraActive && (
+                <div className="absolute inset-8 pointer-events-none flex flex-col justify-between">
+                  <div className="flex justify-between">
+                    <div className="w-6 h-6 border-t-2 border-l-2 border-emerald-400 rounded-tl-lg" />
+                    <div className="w-6 h-6 border-t-2 border-r-2 border-emerald-400 rounded-tr-lg" />
+                  </div>
+                  
+                  <div className="w-full h-0.5 bg-linear-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_8px_#34d399] animate-bounce" />
 
-                <div className="flex justify-between">
-                  <div className="w-6 h-6 border-b-2 border-l-2 border-emerald-400 rounded-bl-lg" />
-                  <div className="w-6 h-6 border-b-2 border-r-2 border-emerald-400 rounded-br-lg" />
+                  <div className="flex justify-between">
+                    <div className="w-6 h-6 border-b-2 border-l-2 border-emerald-400 rounded-bl-lg" />
+                    <div className="w-6 h-6 border-b-2 border-r-2 border-emerald-400 rounded-br-lg" />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 

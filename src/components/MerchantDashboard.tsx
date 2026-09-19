@@ -139,10 +139,15 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
   };
 
   const displayTickets = tickets.filter(t => {
+    const venueNameLower = selectedVenue.name.toLowerCase();
     const byAddress = t.merchantAddress?.toLowerCase() === selectedVenue.walletAddress.toLowerCase();
-    const byName = t.venueName.toLowerCase().includes(selectedVenue.name.toLowerCase()) || 
-                   selectedVenue.name.toLowerCase().includes(t.venueName.toLowerCase());
-    return byAddress || byName;
+    const byName = t.venueName.toLowerCase().includes(venueNameLower) || venueNameLower.includes(t.venueName.toLowerCase());
+    const byTitle = t.title.toLowerCase().includes(venueNameLower);
+    // Extra fallback: if the ticket's venue name shares at least one significant word with the selected venue
+    const words = venueNameLower.split(' ').filter(w => w.length > 3);
+    const byWords = words.some(w => t.venueName.toLowerCase().includes(w) || t.title.toLowerCase().includes(w));
+    
+    return byAddress || byName || byTitle || byWords;
   });
 
   const filteredTickets = displayTickets.filter(t => {
@@ -251,6 +256,7 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
                 <video
                   ref={videoRef}
                   playsInline
+                  autoPlay
                   muted
                   className="w-full h-full object-cover"
                 />

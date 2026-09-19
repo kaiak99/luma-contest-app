@@ -65,8 +65,12 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
           videoRef.current.play();
         }
         setIsCameraActive(true);
+      } else {
+        alert("La fotocamera non è disponibile. Potresti essere su una rete non sicura (HTTP) senza permessi SSL.");
       }
-    } catch {
+    } catch (err: any) {
+      console.error(err);
+      alert("Permesso fotocamera negato o dispositivo non trovato. Controlla i permessi del browser.");
       setIsCameraActive(false);
     }
   };
@@ -119,7 +123,7 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     if (!manualCodeInput.trim()) return;
 
     const query = manualCodeInput.trim().toLowerCase();
-    const matched = tickets.find(
+    const matched = displayTickets.find(
       t => t.ticketId.toLowerCase().includes(query) || t.qrPayload.toLowerCase().includes(query)
     );
 
@@ -134,11 +138,12 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     }
   };
 
-  // Filter tickets specifically for this venue
-  const displayTickets = tickets.filter(t => 
-    t.venueName.toLowerCase().includes(selectedVenue.name.toLowerCase()) ||
-    selectedVenue.name.toLowerCase().includes(t.venueName.toLowerCase())
-  );
+  const displayTickets = tickets.filter(t => {
+    const byAddress = t.merchantAddress?.toLowerCase() === selectedVenue.walletAddress.toLowerCase();
+    const byName = t.venueName.toLowerCase().includes(selectedVenue.name.toLowerCase()) || 
+                   selectedVenue.name.toLowerCase().includes(t.venueName.toLowerCase());
+    return byAddress || byName;
+  });
 
   const filteredTickets = displayTickets.filter(t => {
     if (filter === 'pending') return !t.isValidated;

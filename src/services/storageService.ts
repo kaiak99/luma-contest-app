@@ -43,6 +43,15 @@ export const storageService = {
     return false;
   },
 
+  clearTickets(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(TICKETS_KEY);
+    } catch (e) {
+      console.error('Failed to clear tickets', e);
+    }
+  },
+
   getLoyaltyPoints(): number {
     if (typeof window === 'undefined') return 0;
     try {

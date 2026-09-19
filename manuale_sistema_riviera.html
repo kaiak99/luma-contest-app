@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Riviera Protocol — Manuale Operativo e Logica di Sistema</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    @page {
+      size: A4;
+      margin: 14mm 16mm 14mm 16mm;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #0f172a;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-size: 13px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 268mm;
+      max-height: 268mm;
+      overflow: hidden;
+    }
+
+    .page:last-child {
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    .page-content {
+      flex: 1;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748b;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      background-color: #0f172a;
+      color: #ffffff;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 16px;
+    }
+
+    h1.hero-title {
+      font-size: 30px;
+      font-weight: 900;
+      line-height: 1.2;
+      letter-spacing: -0.6px;
+      color: #0f172a;
+      margin-bottom: 12px;
+    }
+
+    p.hero-subtitle {
+      font-size: 14.5px;
+      color: #475569;
+      font-weight: 400;
+      line-height: 1.5;
+      margin-bottom: 22px;
+    }
+
+    .meta-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 24px;
+    }
+
+    .meta-card .item span.label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748b;
+      margin-bottom: 3px;
+    }
+
+    .meta-card .item span.val {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #0f172a;
+    }
+
+    .section-idx {
+      font-size: 11px;
+      font-weight: 900;
+      background: #0f172a;
+      color: #ffffff;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h2.section-heading {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      color: #0f172a;
+    }
+
+    p.lead-text {
+      font-size: 13px;
+      color: #334155;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+
+    .card-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 14px 0;
+    }
+
+    .card-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 14px 0;
+    }
+
+    .box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .box.dark {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+    }
+
+    .box h3 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+
+    .box.dark h3 {
+      color: #ffffff;
+    }
+
+    .box p {
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.5;
+    }
+
+    .box.dark p {
+      color: #94a3b8;
+    }
+
+    .quote-box {
+      background: #f1f5f9;
+      border-left: 4px solid #0f172a;
+      padding: 14px 18px;
+      border-radius: 0 10px 10px 0;
+      margin: 14px 0;
+      font-size: 12.5px;
+      color: #1e293b;
+      line-height: 1.55;
+    }
+
+    .feature-points {
+      list-style: none;
+      margin: 12px 0;
+    }
+
+    .feature-points li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 12px;
+      font-size: 12.5px;
+      color: #334155;
+      line-height: 1.5;
+    }
+
+    .feature-points li::before {
+      content: "■";
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      color: #0f172a;
+      font-size: 9px;
+    }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 12px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    table.data-table th {
+      background: #0f172a;
+      color: #ffffff;
+      font-weight: 700;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11.5px;
+    }
+
+    table.data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: top;
+      line-height: 1.45;
+    }
+
+    table.data-table tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-blue { background: #e0f2fe; color: #0369a1; }
+    .badge-amber { background: #fef3c7; color: #92400e; }
+
+    .page-footer {
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10.5px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== PAGINA 1 ==================== -->
+  <div class="page">
+    <div class="page-content">
+      <div class="top-bar">
+        <span>Riviera Protocol</span>
+        <span>Documento di Logica Operativa</span>
+      </div>
+
+      <div class="brand-pill">RIVIERA • PESCARA SMART PROTOCOL</div>
+      <h1 class="hero-title">Manuale Operativo e Logica di Sistema</h1>
+      <p class="hero-subtitle">
+        Guida completa al funzionamento di Riviera: come il sistema rivoluziona le prenotazioni per la ristorazione e il turismo a Pescara, elimina i no-show e ristabilisce un patto di reciproca certezza tra ospiti e gestori.
+      </p>
+
+      <div class="meta-card">
+        <div class="item">
+          <span class="label">Progetto</span>
+          <span class="val">Riviera Protocol</span>
+        </div>
+        <div class="item">
+          <span class="label">Destinazione</span>
+          <span class="val">Costa di Pescara</span>
+        </div>
+        <div class="item">
+          <span class="label">Tipologia</span>
+          <span class="val">Smart Pass QR</span>
+        </div>
+        <div class="item">
+          <span class="label">Rete Attiva</span>
+          <span class="val">Avalanche Mainnet</span>
+        </div>
+      </div>
+
+      <div class="section-title-wrap">
+        <div class="section-idx">1</div>
+        <h2 class="section-heading">Il Problema Reale che il Sistema Risolve</h2>
+      </div>
+
+      <p class="lead-text">
+        Nel settore della ristorazione, degli stabilimenti balneari e delle attività ricreative, il modello tradizionale di prenotazione (telefonate o chat informali) presenta un problema critico: <strong>la totale assenza di impegno bilaterale</strong>.
+      </p>
+
+      <div class="card-grid-2">
+        <div class="box">
+          <h3>Il Danno dei "No-Show" per i Locali</h3>
+          <p>
+            I clienti tendono a prenotare tavoli in più ristoranti contemporaneamente per poi scegliere all'ultimo istante, senza avvisare gli altri. I locali tengono i tavoli bloccati, respingono clienti arrivati di persona e subiscono un danno economico netto a fine serata.
+          </p>
+        </div>
+
+        <div class="box">
+          <h3>Incertezza e Code per i Clienti</h3>
+          <p>
+            Chi prenota a voce non riceve una ricevuta contrattuale. Arrivato al locale nelle sere di punta, scopre che la prenotazione è stata smarrita, che il tavolo è stato ceduto a qualcun altro o che deve fare la fila come chiunque altro.
+          </p>
+        </div>
+      </div>
+
+      <div class="quote-box">
+        <strong>L'obiettivo di Riviera:</strong> Non costringere il cliente a pagare in anticipo l'intero importo della cena, ma stabilire un <strong>accordo di serietà reciproca con deposito simbolico</strong> garantito da un pass digitale univoco con QR code.
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>Riviera Smart Protocol • Pescara</span>
+      <span>Pagina 1 di 4</span>
+    </div>
+  </div>
+
+  <!-- ==================== PAGINA 2 ==================== -->
+  <div class="page">
+    <div class="page-content">
+      <div class="top-bar">
+        <span>Riviera Protocol</span>
+        <span>2. La Logica Operativa del Patto</span>
+      </div>
+
+      <div class="section-title-wrap">
+        <div class="section-idx">2</div>
+        <h2 class="section-heading">Come Funziona il Patto tra Cliente e Gestore</h2>
+      </div>
+
+      <p class="lead-text">
+        Riviera introduce un modello chiaro, equo e matematico senza intermediari che trattengono percentuali o fondi per settimane. Il sistema gestisce 3 scenari operativi precisi:
+      </p>
+
+      <div class="card-grid-3">
+        <div class="box">
+          <span class="badge-status badge-green">Scenario A</span>
+          <h3 style="margin-top: 8px;">L'Ospite Arriva al Locale</h3>
+          <p>
+            L'ospite si presenta all'orario stabilito ed esibisce il Pass QR. Il gestore lo inquadra con lo scanner: la presenza è confermata, il tavolo è assegnato e il deposito viene scalato dal conto finale o restituito. Costo per il cliente: zero.
+          </p>
+        </div>
+
+        <div class="box">
+          <span class="badge-status badge-amber">Scenario B</span>
+          <h3 style="margin-top: 8px;">L'Ospite Non si Presenta</h3>
+          <p>
+            Se l'ospite prenota ma decide di non presentarsi, il locale ha tenuto il tavolo occupato e non ha potuto servire altri clienti. In questo caso, il deposito viene riconosciuto al gestore come indennizzo automatico per il tavolo bloccato.
+          </p>
+        </div>
+
+        <div class="box">
+          <span class="badge-status badge-blue">Scenario C</span>
+          <h3 style="margin-top: 8px;">Tutela Meteo Automatica</h3>
+          <p>
+            Per attività all'aperto (spiaggia, gite in barca, padel), se a Pescara si verificano condizioni meteo avverse certificate, la prenotazione viene annullata automaticamente e il deposito rimborsato all'ospite senza discussioni.
+          </p>
+        </div>
+      </div>
+
+      <div class="section-title-wrap" style="margin-top: 24px;">
+        <div class="section-idx">3</div>
+        <h2 class="section-heading">Perché Questo Modello è Equo per Entrambi</h2>
+      </div>
+
+      <p class="lead-text">
+        Rispetto ai portali tradizionali che non chiedono impegno o che pretendono il pagamento completo anticipato del menu, Riviera trova il perfetto equilibrio:
+      </p>
+
+      <ul class="feature-points">
+        <li>
+          <strong>Barriera anti no-show efficace:</strong> Anche un micro-deposito (es. 0.001 AVAX, pochi centesimi) è psicologicamente sufficiente a eliminare le prenotazioni fasulle o le doppie prenotazioni della stessa comitiva.
+        </li>
+        <li>
+          <strong>Tavolo garantito per l'ospite:</strong> Il gestore non può riassegnare il tavolo a terzi perché il pass del cliente è già registrato nel sistema con data, ora e numero di coperti vincolanti.
+        </li>
+        <li>
+          <strong>Eliminazione delle contestazioni verbali:</strong> Non esistono discussioni: il registro certifica inequivocabilmente l'ora e il minuto del check-in registrato dallo scanner.
+        </li>
+      </ul>
+    </div>
+
+    <div class="page-footer">
+      <span>Riviera Smart Protocol • Pescara</span>
+      <span>Pagina 2 di 4</span>
+    </div>
+  </div>
+
+  <!-- ==================== PAGINA 3 ==================== -->
+  <div class="page">
+    <div class="page-content">
+      <div class="top-bar">
+        <span>Riviera Protocol</span>
+        <span>3. Esperienza Cliente & Gestore</span>
+      </div>
+
+      <div class="section-title-wrap">
+        <div class="section-idx">4</div>
+        <h2 class="section-heading">L'Esperienza per il Cliente (Area Ospiti)</h2>
+      </div>
+
+      <p class="lead-text">
+        Per il cliente finale l'applicazione è rapida e senza burocrazia. Non richiede registrazioni complesse o l'inserimento di carte di credito:
+      </p>
+
+      <ul class="feature-points">
+        <li>
+          <strong>Desk di Ricerca e Prenotazione:</strong> Il cliente indica la sua richiesta (es. <em>"Tavolo per 2 stasera alla Pizzeria Da Giampiero"</em> o <em>"Ombrellone al Lido Moby Dick"</em>). Il sistema individua immediatamente disponibilità e orari.
+        </li>
+        <li>
+          <strong>Conferma dal Wallet:</strong> Il cliente approva il deposito di garanzia direttamente dal proprio wallet in un clic, con massima trasparenza.
+        </li>
+        <li>
+          <strong>Il Pass Digitale (QR Pass):</strong> L'applicazione genera una card digitale in stile Apple Wallet:
+          nome del locale, data, orario, numero di ospiti, codice identificativo e un codice QR pronto per l'ingresso.
+        </li>
+        <li>
+          <strong>Pass di Gruppo Condivisibile:</strong> Quando si prenota per più persone, il sistema genera un link di invito con cui tutti i componenti della comitiva possono visualizzare il pass sui propri smartphone.
+        </li>
+      </ul>
+
+      <div class="section-title-wrap" style="margin-top: 24px;">
+        <div class="section-idx">5</div>
+        <h2 class="section-heading">L'Esperienza per il Gestore (Terminale Accoglienza)</h2>
+      </div>
+
+      <p class="lead-text">
+        Il gestore del locale accede a un terminale operativo studiato per i ritmi veloci del servizio di sala e dell'accoglienza:
+      </p>
+
+      <div class="card-grid-2">
+        <div class="box">
+          <h3>Selezione del Locale Gestito</h3>
+          <p>
+            Al login gestore, l'utente seleziona la propria attività dall'elenco convenzionato di Pescara. Il terminale si carica esclusivamente con i tavoli e le prenotazioni di quella specifica sede.
+          </p>
+        </div>
+
+        <div class="box">
+          <h3>Scanner Ottico e Inserimento Rapido</h3>
+          <p>
+            All'arrivo dell'ospite, il personale inquadra il QR con la fotocamera oppure digita il codice breve del pass. La convalida del check-in avviene in un secondo con feedback visivo immediato.
+          </p>
+        </div>
+      </div>
+
+      <div class="box dark" style="margin-top: 8px;">
+        <h3>Registro Arrivi in Tempo Reale</h3>
+        <p>
+          Il terminale offre contatori costantemente aggiornati (*Prenotazioni*, *Arrivati*, *In Attesa*) e la lista completa degli ospiti del giorno, con la possibilità di convalidare l'arrivo direttamente con un tocco dall'elenco.
+        </p>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>Riviera Smart Protocol • Pescara</span>
+      <span>Pagina 3 di 4</span>
+    </div>
+  </div>
+
+  <!-- ==================== PAGINA 4 ==================== -->
+  <div class="page">
+    <div class="page-content">
+      <div class="top-bar">
+        <span>Riviera Protocol</span>
+        <span>4. Logica di Fiducia & Valore Economico</span>
+      </div>
+
+      <div class="section-title-wrap">
+        <div class="section-idx">6</div>
+        <h2 class="section-heading">Perché Questa Architettura (Senza Tecnicismi)</h2>
+      </div>
+
+      <p class="lead-text">
+        Spesso ci si chiede perché usare un'infrastruttura neutrale invece di un normale database interno gestito dal locale. La risposta è nella <strong>garanzia di terzietà e assenza di conflitti</strong>:
+      </p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 28%;">Parametro</th>
+            <th style="width: 36%;">Sistemi Tradizionali & Portali Web</th>
+            <th style="width: 36%;">Protocollo Riviera</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Gestione della Garanzia</strong></td>
+            <td>Un'azienda intermediaria trattiene i soldi, addebita fino al 15% di commissione al ristoratore e ritarda i pagamenti.</td>
+            <td>Nessun intermediario a percentuale: il patto è diretto tra cliente e locale con esecuzione immediata.</td>
+          </tr>
+          <tr>
+            <td><strong>Falsificabilità del Pass</strong></td>
+            <td>Un'email o uno screenshot possono essere modificati con Photoshop o inoltrati a più amici per entrare due volte.</td>
+            <td>Ogni pass possiede un codice univoco. Una volta scansionato dallo scanner del locale, il pass risulta utilizzato e non riutilizzabile.</td>
+          </tr>
+          <tr>
+            <td><strong>Fiducia del Cliente</strong></td>
+            <td>Il cliente ha timore di inviare caparre a locali sconosciuti perché teme di non riaverle in caso di imprevisti o maltempo.</td>
+            <td>Le regole di sblocco sono oggettive: check-in avvenuto = sconto immediato sul conto finale.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="section-title-wrap" style="margin-top: 24px;">
+        <div class="section-idx">7</div>
+        <h2 class="section-heading">Sintesi dei Benefici per la Città di Pescara</h2>
+      </div>
+
+      <div class="card-grid-2">
+        <div class="box">
+          <h3>Per i Ristoratori e Gestori Balneari</h3>
+          <p>
+            • Azzeramento delle perdite economiche da tavoli vuoti non disdetti.<br>
+            • Sala e ombrelloni ottimizzati al 100% della capienza reale.<br>
+            • Eliminazione dei registri cartacei e delle contestazioni verbali.<br>
+            • Strumento moderno e veloce per l'accoglienza all'ingresso.
+          </p>
+        </div>
+
+        <div class="box">
+          <h3>Per i Cittadini e i Turisti</h3>
+          <p>
+            • Certezza matematica di avere il tavolo o il servizio pronto all'arrivo.<br>
+            • Zero perdite di tempo in code o attese all'ingresso.<br>
+            • Nessun obbligo di pagare cene o conti in anticipo.<br>
+            • Tutela meteo automatica per giornate al mare o sport all'aperto.
+          </p>
+        </div>
+      </div>
+
+      <div class="quote-box" style="margin-top: 14px;">
+        <strong>In sintesi:</strong> Riviera combina l'immediatezza di un concierge digitale con la solidità di un patto certo, offrendo a Pescara uno standard moderno di accoglienza e affidabilità.
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <span>Riviera Smart Protocol • Pescara</span>
+      <span>Pagina 4 di 4</span>
+    </div>
+  </div>
+
+</body>
+</html>

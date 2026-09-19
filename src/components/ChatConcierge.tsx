@@ -8,10 +8,12 @@ import { ActionProposalCard } from './ActionProposalCard';
 import { Send, Ticket as TicketIcon, MapPin, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
-import { useSendTransaction } from 'wagmi';
+import { useAccount, useChainId, useSendTransaction, useSwitchChain } from 'wagmi';
+import { avalanche } from 'wagmi/chains';
 import { parseEther } from 'viem';
 import { isOutdoorActivity } from '@/services/weatherService';
 import { RivieraLogo } from './RivieraLogo';
+import { getExplorerTxUrl } from '@/config/avalanche';
 
 interface ChatConciergeProps {
   onTicketGenerated: (ticket: VerifiableTicket) => void;
@@ -27,11 +29,15 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
   onOpenWalletModal,
 }) => {
   const { openConnectModal } = useConnectModal();
+  const chainId = useChainId();
+  const { switchChainAsync } = useSwitchChain();
+  const { sendTransactionAsync } = useSendTransaction();
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       sender: 'assistant',
-      text: 'Benvenuto al Desk Riviera per Pescara.\nIndica il locale, ristorante o attività che desideri prenotare. Riceverai un pass digitale onchain con codice QR valido per l\'ingresso e il tavolo riservato.',
+      text: 'Benvenuto al Desk Riviera per Pescara.\nIndica il locale, ristorante o attività che desideri prenotare. La prenotazione diventerà effettiva solo previa firma della transazione di deposito on-chain su Avalanche C-Chain con il tuo wallet Web3.',
       timestamp: Date.now(),
     },
   ]);
@@ -51,17 +57,29 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
     scrollToBottom();
   }, [messages, executingIntentId, isProcessing, processingStep]);
 
-  const { sendTransactionAsync } = useSendTransaction();
-
   const executeRealTransaction = async (intent: ParsedIntent) => {
     try {
+      // 1. Ensure user is on Avalanche C-Chain (Chain ID 43114)
+      if (chainId !== avalanche.id) {
+        try {
+          await switchChainAsync({ chainId: avalanche.id });
+        } catch {
+          throw new Error('Passaggio di rete ad Avalanche C-Chain rifiutato. È necessario essere su Avalanche per confermare.');
+        }
+      }
+
       const merchantAddress = (intent.merchantAddress as `0x${string}`) || '0x49c6d4Eb5e0988647E335F3f83ded44955E9FCFD';
 
-      // Request user's wallet signature & transaction broadcast on Avalanche C-Chain
+      // 2. Request user's wallet signature & broadcast transaction on Avalanche C-Chain
       const txHash = await sendTransactionAsync({
         to: merchantAddress,
         value: parseEther(DEPOSIT_AVAX),
+        chainId: avalanche.id,
       });
+
+      if (!txHash) {
+        throw new Error('Nessun hash di transazione generato dal wallet.');
+      }
 
       const blockTimestamp = Date.now();
       const ticketId = `RIV-${Math.floor(Date.now() / 1000).toString().slice(-4)}-${Math.floor(100 + Math.random() * 900)}`;
@@ -81,6 +99,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
           holder: walletAddress,
           time: blockTimestamp,
           group: groupId,
+          chain: 'avalanche-c-chain-43114',
         }),
         actionType: intent.type,
         title: intent.title,
@@ -110,12 +129,13 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
         origin: { y: 0.6 },
       });
 
+      // ONLY save and propagate the ticket after confirmed wallet signature
       onTicketGenerated(ticket);
 
       const confirmMsg: ChatMessage = {
         id: `confirm-${Date.now()}`,
         sender: 'assistant',
-        text: `Transazione confermata su Avalanche!\nHash: **${txHash.slice(0, 10)}...${txHash.slice(-6)}**\n\nIl pass d'ingresso digitale per **${intent.venueName}** è stato emesso ed è disponibile nella scheda "I Miei Pass".`,
+        text: `Transazione on-chain confermata su Avalanche C-Chain!\nHash: [${txHash.slice(0, 10)}...${txHash.slice(-6)}](${getExplorerTxUrl(txHash)})\n\nIl pass d'ingresso crittografico per **${intent.venueName}** è stato registrato ed è ora attivo nella scheda "I Miei Pass". Mostra il codice QR al personale del locale all'arrivo.`,
         timestamp: Date.now(),
         ticket,
       };
@@ -123,10 +143,18 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
       setMessages(prev => [...prev, confirmMsg]);
     } catch (err: any) {
       console.error('Wallet transaction error:', err);
-      const isUserRejected = err?.name === 'UserRejectedRequestError' || err?.message?.toLowerCase().includes('reject');
-      const errText = isUserRejected
-        ? 'Richiesta di transazione annullata nel wallet.'
-        : `Errore transazione wallet: ${err?.shortMessage || err?.message || 'Verifica il saldo AVAX per il gas.'}`;
+      const isUserRejected = err?.name === 'UserRejectedRequestError' || 
+                             err?.message?.toLowerCase().includes('reject') ||
+                             err?.message?.toLowerCase().includes('user denied');
+      const isInsufficient = err?.message?.toLowerCase().includes('insufficient') ||
+                             err?.shortMessage?.toLowerCase().includes('insufficient');
+
+      let errText = `Errore transazione: ${err?.shortMessage || err?.message || 'Verifica il wallet.'}`;
+      if (isUserRejected) {
+        errText = 'Firma annullata nel wallet. Nessun fondo è stato trasferito, la prenotazione NON è registrata e nessun pass è stato emesso.';
+      } else if (isInsufficient) {
+        errText = `Saldo AVAX insufficiente. Per effettuare la prenotazione reale on-chain su Avalanche occorrono ${DEPOSIT_AVAX} AVAX per il deposito cauzionale più una frazione per il gas di rete.`;
+      }
 
       const errorMsg: ChatMessage = {
         id: `error-${Date.now()}`,
@@ -231,7 +259,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
       const proposal: ParsedIntent = {
         id: `intent-${Date.now()}`,
         type: actionType,
-        title: `Prenotazione: ${option.venueName || option.title}`,
+        title: `Proposta: ${option.venueName || option.title}`,
         venueName: option.venueName || option.title,
         venueLocation: option.location,
         date: 'Stasera (19 Settembre)',
@@ -241,7 +269,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
         merchantAddress: option.merchantAddress || '0x8b31a293A2613D0Ac354086E5d39A6f1E2c3008A',
         items: [
           {
-            name: `${option.bookingType || 'Tavolo riservato'} per ${guestCount} persone`,
+            name: `${option.bookingType || 'Tavolo'} per ${guestCount} persone`,
             quantity: 1,
           },
         ],
@@ -252,7 +280,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
         calldataPreview: '0x...',
         contractTarget: RIVIERA_CONTRACTS.bookingEscrow,
         loyaltyCashbackAvax: 0,
-        explanation: `Disponibilità confermata per **${option.venueName || option.title}** per stasera alle 20:30.`,
+        explanation: `Disponibilità verificata per **${option.venueName || option.title}**. Firma la transazione nel tuo wallet per confermare la prenotazione.`,
         isOutdoor: isOutdoorActivity(actionType),
         groupId,
       };
@@ -260,7 +288,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
       const assistantMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         sender: 'assistant',
-        text: `Ho predisposto la scheda per **${option.venueName || option.title}** (${option.location}). Conferma per ricevere il pass d'ingresso.`,
+        text: `Ho verificato la disponibilità per **${option.venueName || option.title}** (${option.location}).\nConsulta la scheda sottostante e firma la transazione nel tuo wallet per confermare la prenotazione.`,
         timestamp: Date.now(),
         actionProposal: proposal,
       };
@@ -308,6 +336,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
               }`}
               dangerouslySetInnerHTML={{
                 __html: msg.text
+                  .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline font-semibold hover:text-blue-800">$1</a>')
                   .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                   .replace(/\*(.*?)\*/g, '<em>$1</em>'),
               }}

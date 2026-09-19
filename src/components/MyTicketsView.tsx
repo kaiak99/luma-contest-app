@@ -9,12 +9,14 @@ interface MyTicketsViewProps {
   tickets: VerifiableTicket[];
   onSelectTicket: (ticket: VerifiableTicket) => void;
   onNavigateToConcierge: () => void;
+  onClearTickets?: () => void;
 }
 
 export const MyTicketsView: React.FC<MyTicketsViewProps> = ({
   tickets,
   onSelectTicket,
   onNavigateToConcierge,
+  onClearTickets,
 }) => {
   return (
     <div className="space-y-6">
@@ -22,16 +24,26 @@ export const MyTicketsView: React.FC<MyTicketsViewProps> = ({
         <div>
           <h2 className="text-2xl font-bold text-slate-900">I Miei Pass</h2>
           <p className="text-sm text-slate-600 mt-1 font-medium">
-            Biglietti e pass d&apos;ingresso registrati su Avalanche. Mostra il codice QR all&apos;arrivo.
+            Biglietti e pass d&apos;ingresso registrati su Avalanche C-Chain. Mostra il codice QR all&apos;arrivo.
           </p>
         </div>
 
-        <button
-          onClick={onNavigateToConcierge}
-          className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl text-sm font-bold transition-colors cursor-pointer self-start sm:self-auto"
-        >
-          Nuova Prenotazione
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {tickets.length > 0 && onClearTickets && (
+            <button
+              onClick={onClearTickets}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-3 rounded-2xl text-xs font-bold transition-colors cursor-pointer"
+            >
+              Azzera Pass
+            </button>
+          )}
+          <button
+            onClick={onNavigateToConcierge}
+            className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl text-sm font-bold transition-colors cursor-pointer"
+          >
+            Nuova Prenotazione
+          </button>
+        </div>
       </div>
 
       {tickets.length === 0 ? (

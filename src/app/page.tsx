@@ -75,6 +75,12 @@ export default function Home() {
     setSelectedTicket(newTicket);
   };
 
+  const handleClearTickets = () => {
+    storageService.clearTickets();
+    setTickets([]);
+    setSelectedTicket(null);
+  };
+
   const handleValidateTicket = (ticketId: string) => {
     const success = storageService.validateTicket(ticketId);
     if (success) {
@@ -138,6 +144,7 @@ export default function Home() {
                 tickets={tickets}
                 onSelectTicket={ticket => setSelectedTicket(ticket)}
                 onNavigateToConcierge={() => setActiveTab('concierge')}
+                onClearTickets={handleClearTickets}
               />
             )}
           </>

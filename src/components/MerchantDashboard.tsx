@@ -134,14 +134,11 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     }
   };
 
-  // Filter tickets for this venue if matching, otherwise show all available tickets for convenient demoing
-  const venueTickets = tickets.filter(t => 
+  // Filter tickets specifically for this venue
+  const displayTickets = tickets.filter(t => 
     t.venueName.toLowerCase().includes(selectedVenue.name.toLowerCase()) ||
     selectedVenue.name.toLowerCase().includes(t.venueName.toLowerCase())
   );
-  
-  // Use venueTickets if any exist, or fallback to tickets so the merchant is never stuck with an empty screen in the demo
-  const displayTickets = venueTickets.length > 0 ? venueTickets : tickets;
 
   const filteredTickets = displayTickets.filter(t => {
     if (filter === 'pending') return !t.isValidated;

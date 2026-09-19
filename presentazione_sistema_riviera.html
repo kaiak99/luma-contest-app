@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMART Riviera — La Rivoluzione dell'Hospitality Costiera</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;800&display=swap');
+
+    :root {
+      --bg: #060913;
+      --card-bg: rgba(15, 23, 42, 0.75);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-highlight: rgba(56, 189, 248, 0.25);
+      --text: #F8FAFC;
+      --muted: #94A3B8;
+      --cyan: #38BDF8;
+      --cyan-gradient: linear-gradient(135deg, #38BDF8 0%, #818CF8 100%);
+      --red: #E84142;
+      --emerald: #10B981;
+      --amber: #F59E0B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Fixed Navigation Bar */
+    .deck-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: rgba(6, 9, 19, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      z-index: 100;
+      user-select: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+
+    .brand-tag {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+    }
+
+    .counter span {
+      color: #fff;
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-export {
+      background: #fff;
+      color: #060913;
+      border: none;
+      font-weight: 800;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .btn-export:hover {
+      transform: translateY(-1px);
+    }
+
+    .progress {
+      position: fixed;
+      top: 51px;
+      left: 0;
+      height: 2px;
+      background: var(--cyan);
+      width: 20%;
+      transition: width 0.3s ease;
+      z-index: 101;
+    }
+
+    /* 16:9 Presentation Slides */
+    .deck-container {
+      padding-top: 52px;
+    }
+
+    .slide {
+      width: 100vw;
+      min-height: calc(100vh - 52px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 60px 84px 44px 84px;
+      position: relative;
+      background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.07) 0%, transparent 45%),
+                  radial-gradient(circle at 15% 85%, rgba(232, 65, 66, 0.04) 0%, transparent 45%);
+      page-break-after: always;
+      break-after: page;
+    }
+
+    /* Slide Header */
+    .header-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+
+    .header-tag .circle {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+    }
+
+    .title-xl {
+      font-size: 40px;
+      font-weight: 900;
+      letter-spacing: -1.2px;
+      line-height: 1.12;
+      color: #fff;
+    }
+
+    .subtitle-m {
+      font-size: 17px;
+      color: var(--muted);
+      margin-top: 8px;
+      font-weight: 500;
+      max-width: 900px;
+      line-height: 1.45;
+    }
+
+    /* Slide Footer */
+    .slide-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 20px;
+      border-top: 1px solid var(--card-border);
+      font-size: 11.5px;
+      color: #64748B;
+      font-weight: 600;
+    }
+
+    /* Cards and Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin: auto 0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin: auto 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    .card.accent-cyan {
+      border-color: rgba(56, 189, 248, 0.35);
+      background: linear-gradient(180deg, rgba(56, 189, 248, 0.06) 0%, rgba(15, 23, 42, 0.85) 100%);
+    }
+
+    .card.accent-red {
+      border-color: rgba(232, 65, 66, 0.3);
+      background: linear-gradient(180deg, rgba(232, 65, 66, 0.05) 0%, rgba(15, 23, 42, 0.85) 100%);
+    }
+
+    .card.accent-emerald {
+      border-color: rgba(16, 185, 129, 0.3);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(15, 23, 42, 0.85) 100%);
+    }
+
+    .card-kicker {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
+    }
+
+    .card-heading {
+      font-size: 21px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+      letter-spacing: -0.4px;
+      line-height: 1.25;
+    }
+
+    .card-body {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .card-stat {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .stat-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .stat-text {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748B;
+    }
+
+    /* Comparison Box */
+    .compare-side {
+      padding: 30px;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .compare-side.old {
+      background: rgba(232, 65, 66, 0.04);
+      border: 1px solid rgba(232, 65, 66, 0.2);
+    }
+
+    .compare-side.new {
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .compare-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .compare-badge {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .compare-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    /* Cover Styling */
+    .cover-layout {
+      justify-content: center;
+      padding: 0 110px;
+      background: radial-gradient(circle at 75% 25%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
+                  radial-gradient(circle at 20% 75%, rgba(232, 65, 66, 0.06) 0%, transparent 45%);
+    }
+
+    .cover-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 7px 18px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 24px;
+    }
+
+    .cover-headline {
+      font-size: 60px;
+      font-weight: 900;
+      letter-spacing: -1.8px;
+      line-height: 1.05;
+      max-width: 950px;
+      margin-bottom: 20px;
+    }
+
+    .cover-subheadline {
+      font-size: 21px;
+      color: var(--muted);
+      max-width: 820px;
+      line-height: 1.45;
+      font-weight: 500;
+      margin-bottom: 40px;
+    }
+
+    .cover-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 28px;
+      padding-top: 32px;
+      border-top: 1px solid var(--card-border);
+      width: 100%;
+      max-width: 900px;
+    }
+
+    /* Print 16:9 Landscape Rule */
+    @page {
+      size: 16in 9in;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        background: #060913 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .deck-nav, .progress {
+        display: none !important;
+      }
+
+      .deck-container {
+        padding-top: 0 !important;
+      }
+
+      .slide {
+        width: 16in !important;
+        height: 9in !important;
+        min-height: 9in !important;
+        max-height: 9in !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+        padding: 50px 76px 40px 76px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Controller -->
+  <header class="deck-nav">
+    <div class="brand">
+      <span>SMART RIVIERA</span>
+      <span class="brand-tag">Executive Pitch Deck</span>
+    </div>
+
+    <div class="nav-controls">
+      <button class="btn" onclick="prev()">Indietro</button>
+      <div class="counter"><span id="cSlide">01</span> / 05</div>
+      <button class="btn" onclick="next()">Avanti</button>
+    </div>
+
+    <div>
+      <button class="btn-export" onclick="window.print()">Esporta PDF (16:9)</button>
+    </div>
+  </header>
+
+  <div class="progress" id="pBar"></div>
+
+  <main class="deck-container">
+
+    <!-- SLIDE 1: COVER / LA VISIONE -->
+    <section class="slide cover-layout" id="s-1">
+      <div>
+        <div class="cover-tag">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: #E84142; display: inline-block;"></span>
+          La Rivoluzione dell'Hospitality Territoriale
+        </div>
+
+        <h1 class="cover-headline">
+          Basta Commissioni. Basta No-Show.<br>
+          <span style="color: var(--cyan);">L'Accoglienza Torna Diretta.</span>
+        </h1>
+
+        <p class="cover-subheadline">
+          Come l'unione tra Intelligenza Artificiale e Smart Escrow restituisce il controllo economico e la certezza delle presenze agli esercenti della costa.
+        </p>
+
+        <div class="cover-grid">
+          <div>
+            <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #fff;">0%</div>
+            <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-top: 4px;">Commissioni Esterne</div>
+          </div>
+          <div>
+            <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: var(--emerald);">-85%</div>
+            <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-top: 4px;">Tavoli Vuoti (No-Show)</div>
+          </div>
+          <div>
+            <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: var(--cyan);">100%</div>
+            <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-top: 4px;">Garanzia Rimborso Meteo</div>
+          </div>
+          <div>
+            <div style="font-family: 'JetBrains Mono'; font-size: 26px; font-weight: 900; color: #fff;">30 sec</div>
+            <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; margin-top: 4px;">Pass in Chat Naturale</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer" style="width: 100%; max-width: 900px;">
+        <span>Riviera Protocol • Pilota Pescara & Costa dei Trabocchi</span>
+        <span>Slide 01 di 05</span>
+      </div>
+    </section>
+
+
+    <!-- SLIDE 2: IL PROBLEMA vs IL CAMBIO DI PARADIGMA -->
+    <section class="slide" id="s-2">
+      <div>
+        <div class="header-tag"><span class="circle"></span> La Logica Rivoluzionaria</div>
+        <h2 class="title-xl">Perché il Modello Attuale è Fallimentare</h2>
+        <p class="subtitle-m">Gli intermediari digitali estraggono profitti enormi senza assumersi alcun rischio imprenditoriale. Riviera ribalta questa dinamica.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="compare-side old">
+          <div class="compare-title">
+            <span>Il Vecchio Mondo (Portali & OTA)</span>
+            <span class="compare-badge" style="background: rgba(232,65,66,0.15); color: var(--red);">Estrattivo</span>
+          </div>
+          <div class="compare-item">
+            <span style="color: var(--red); font-weight: 800;">✕</span>
+            <div><strong>Tassa sulle prenotazioni (18-25%):</strong> L'esercente lavora e cucina, ma una fetta pesante dell'incasso finisce a multinazionali estere.</div>
+          </div>
+          <div class="compare-item">
+            <span style="color: var(--red); font-weight: 800;">✕</span>
+            <div><strong>Il disastro del no-show gratis:</strong> Un cliente blocca 3 tavoli o 2 ombrelloni in locali diversi e poi decide all'ultimo. Il locale perde il tavolo e l'incasso.</div>
+          </div>
+          <div class="compare-item">
+            <span style="color: var(--red); font-weight: 800;">✕</span>
+            <div><strong>I dati non sono tuoi:</strong> Il gestore non conosce chi siede al tavolo, perché il cliente appartiene alla piattaforma esterna.</div>
+          </div>
+        </div>
+
+        <div class="compare-side new">
+          <div class="compare-title">
+            <span>Il Nuovo Mondo (Riviera Protocol)</span>
+            <span class="compare-badge" style="background: rgba(56,189,248,0.15); color: var(--cyan);">Disintermediato</span>
+          </div>
+          <div class="compare-item">
+            <span style="color: var(--cyan); font-weight: 800;">✓</span>
+            <div><strong>Zero commissioni sul conto:</strong> Il locale riceve la totalità dell'incasso del servizio senza decurtazioni percentuali.</div>
+          </div>
+          <div class="compare-item">
+            <span style="color: var(--cyan); font-weight: 800;">✓</span>
+            <div><strong>Patto di rispetto reciproco (Smart Escrow):</strong> Il cliente deposita una micro-garanzia simbolica (0.001 AVAX). Se si presenta, viene restituita; se diserta, risarcisce il locale.</div>
+          </div>
+          <div class="compare-item">
+            <span style="color: var(--cyan); font-weight: 800;">✓</span>
+            <div><strong>Relazione diretta e fidelizzazione:</strong> Nessun muro di mezzo. Il pass digitale unisce cliente e locale in un legame duraturo.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Non un'ennesima app da scaricare: un'infrastruttura a sovranità diretta</span>
+        <span>Slide 02 di 05</span>
+      </div>
+    </section>
+
+
+    <!-- SLIDE 3: COME FUNZIONA (LOGICA CONCETTUALE) -->
+    <section class="slide" id="s-3">
+      <div>
+        <div class="header-tag"><span class="circle"></span> L'Esperienza Semplice</div>
+        <h2 class="title-xl">Come Funziona: Il Notaio Invisibile</h2>
+        <p class="subtitle-m">La complessità della tecnologia scompare sotto un'esperienza naturale ed elegante sia per chi prenota che per chi accoglie.</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card accent-cyan">
+          <div>
+            <div class="card-kicker" style="color: var(--cyan);">01 • PARLA COME MANGI</div>
+            <h3 class="card-heading">L'AI Concierge</h3>
+            <p class="card-body">
+              Nessun form lungo o menu a tendina noioso. L'ospite scrive in chat naturale: <em>"Tavolo romantico fronte mare per due stasera da Giampiero"</em>. Il concierge comprende l'intento ed estrae data, coperti e orario istantaneamente.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number" style="color: var(--cyan);">0 Form</span>
+            <span class="stat-text">Linguaggio naturale</span>
+          </div>
+        </div>
+
+        <div class="card accent-emerald">
+          <div>
+            <div class="card-kicker" style="color: var(--emerald);">02 • IL DEPOSITO DI RISPETTO</div>
+            <h3 class="card-heading">Lo Smart Escrow</h3>
+            <p class="card-body">
+              Con un click sul proprio wallet Web3, il cliente vincola una piccola garanzia (0.001 AVAX). Non è un pagamento: i fondi rimangono protetti da un codice trasparente e non sono spendibili da nessuno fino all'arrivo.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number" style="color: var(--emerald);">0.001 AVAX</span>
+            <span class="stat-text">Garanzia rimborsabile</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div>
+            <div class="card-kicker" style="color: #fff;">03 • L'ACCESSO ISTANTANEO</div>
+            <h3 class="card-heading">Il Pass QR</h3>
+            <p class="card-body">
+              All'arrivo al locale, l'ospite mostra il QR code dal telefono. Il gestore inquadra lo schermo con qualsiasi smartphone o tablet in meno di mezzo secondo. Il check-in è registrato e il patto è onorato.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number">&lt; 0.3s</span>
+            <span class="stat-text">Validazione ottica</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Avalanche C-Chain opera come arbitro imparziale, veloce ed economico</span>
+        <span>Slide 03 di 05</span>
+      </div>
+    </section>
+
+
+    <!-- SLIDE 4: I BENEFICI REALI -->
+    <section class="slide" id="s-4">
+      <div>
+        <div class="header-tag"><span class="circle"></span> Vantaggi Competitivi</div>
+        <h2 class="title-xl">Perché Tutti ci Guadagnano (Modello Win-Win)</h2>
+        <p class="subtitle-m">Quando la tecnologia elimina l'intermediario parassita, il valore generato rimane interamente nelle tasche di chi produce e di chi consuma.</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card">
+          <div>
+            <div class="card-kicker" style="color: var(--emerald);">PER IL GESTORE</div>
+            <h3 class="card-heading">Zero Costi Hardware & Zero Sorprese</h3>
+            <p class="card-body">
+              Funziona da qualsiasi browser su tablet o cellulare già presente in cassa. Niente contratti vincolanti o POS dedicati. Capienza del locale sempre ottimizzata e stop alle serate rovinate da tavoli rimasti vuoti.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number" style="color: var(--emerald);">+24%</span>
+            <span class="stat-text">Marginalità salvata</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div>
+            <div class="card-kicker" style="color: var(--cyan);">PER IL CLIENTE</div>
+            <h3 class="card-heading">Certezza del Posto & Tutela Meteo</h3>
+            <p class="card-body">
+              Niente telefonate con linee occupate. Tavolo o ombrellone riservato matematicamente. E per le attività all'aperto, se arriva una burrasca improvvisa a Pescara, il rimborso è automatico senza discussioni.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number" style="color: var(--cyan);">Fairness</span>
+            <span class="stat-text">Patto trasparente</span>
+          </div>
+        </div>
+
+        <div class="card accent-cyan">
+          <div>
+            <div class="card-kicker" style="color: var(--cyan);">PER IL TERRITORIO</div>
+            <h3 class="card-heading">Un Distretto Turistico Smart</h3>
+            <p class="card-body">
+              Dalla Riviera di Pescara ai 42 km della Via Verde della Costa dei Trabocchi: un unico pass per connettere ristoranti marinari, stabilimenti balneari, campi da padel e noleggio biciclette.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number">Eco-System</span>
+            <span class="stat-text">Rete costiera unificata</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span>Tutela del valore locale e indipendenza dalle piattaforme multinazionali</span>
+        <span>Slide 04 di 05</span>
+      </div>
+    </section>
+
+
+    <!-- SLIDE 5: ROADMAP & CONCLUSIONE -->
+    <section class="slide" id="s-5">
+      <div>
+        <div class="header-tag"><span class="circle"></span> Visione & Scalabilità</div>
+        <h2 class="title-xl">Dalla Spiaggia di Pescara a Tutta la Costa Adriatica</h2>
+        <p class="subtitle-m">Un piano di espansione modulare già validato su contratti reali Avalanche Mainnet e pronto per la stagione.</p>
+      </div>
+
+      <div class="grid-3">
+        <div class="card accent-cyan">
+          <div>
+            <div class="card-kicker" style="color: var(--cyan);">FASE 01 • OGGI</div>
+            <h3 class="card-heading">Pilota Metropolitano</h3>
+            <p class="card-body">
+              Attivazione delle strutture pilota a Pescara: ristoranti lungomare, lidi balneari, campi da padel e noleggio bike con validazione immediata tramite QR pass.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number" style="color: var(--cyan);">Mainnet</span>
+            <span class="stat-text">Funzionante al 100%</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div>
+            <div class="card-kicker" style="color: #fff;">FASE 02 • Q3 2026</div>
+            <h3 class="card-heading">Costa dei Trabocchi</h3>
+            <p class="card-body">
+              Estensione della rete ai 42 km di costa tra Ortona, San Vito e Vasto: le storiche palafitte di pesca, noleggi e-bike ed escursioni marine in un unico circuito.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number">42 Km</span>
+            <span class="stat-text">Integrazione litorale</span>
+          </div>
+        </div>
+
+        <div class="card accent-emerald">
+          <div>
+            <div class="card-kicker" style="color: var(--emerald);">FASE 03 • 2027</div>
+            <h3 class="card-heading">Riviera Pass NFT & Loyalty</h3>
+            <p class="card-body">
+              Passaporto digitale del turista con sconti incrociati, cashback automatico per chi frequenta i locali della rete ed eventi esclusivi del litorale adriatico.
+            </p>
+          </div>
+          <div class="card-stat">
+            <span class="stat-number" style="color: var(--emerald);">Web3 Pass</span>
+            <span class="stat-text">Fidelizzazione condivisa</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="slide-footer">
+        <span style="font-weight: 800; color: #fff;">SMART RIVIERA PROTOCOL</span>
+        <span>Slide 05 di 05 • Fine Presentazione</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    let current = 1;
+    const total = 5;
+
+    function update() {
+      const pct = (current / total) * 100;
+      document.getElementById('pBar').style.width = pct + '%';
+      document.getElementById('cSlide').innerText = current.toString().padStart(2, '0');
+    }
+
+    function goTo(n) {
+      if (n < 1) n = 1;
+      if (n > total) n = total;
+      current = n;
+      const el = document.getElementById(`s-${current}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      update();
+    }
+
+    function next() {
+      if (current < total) goTo(current + 1);
+    }
+
+    function prev() {
+      if (current > 1) goTo(current - 1);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        next();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        prev();
+      }
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const num = parseInt(entry.target.id.replace('s-', ''), 10);
+          if (num && num !== current) {
+            current = num;
+            update();
+          }
+        }
+      });
+    }, { threshold: 0.5 });
+
+    for (let i = 1; i <= total; i++) {
+      const el = document.getElementById(`s-${i}`);
+      if (el) observer.observe(el);
+    }
+
+    update();
+  </script>
+</body>
+</html>

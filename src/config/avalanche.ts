@@ -12,9 +12,9 @@ export const DEPOSIT_AVAX_NUMBER = 0.001;
 
 // Official smart contracts for Riviera
 export const RIVIERA_CONTRACTS = {
-  bookingEscrow: '0x8f2d5c3176ba32049e21ab745199678120398711',
-  verifiableTickets: '0x3F83DeD44955E9Fcfd95bB54E0513988647e335F',
-  loyaltyRewards: '0x892a065D397aB47833010E102f8319f39B54508e',
+  bookingEscrow: '0x8F2D5C3176Ba32049e21Ab745199678120398711',
+  verifiableTickets: '0x3F83deD44955E9fcfD95bB54E0513988647E335f',
+  loyaltyRewards: '0x892A065d397Ab47833010E102f8319f39b54508E',
 };
 
 export function formatAddress(address: string): string {

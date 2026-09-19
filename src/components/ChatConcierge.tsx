@@ -10,10 +10,24 @@ import confetti from 'canvas-confetti';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAccount, useChainId, useSendTransaction, useSwitchChain } from 'wagmi';
 import { avalanche } from 'wagmi/chains';
-import { parseEther } from 'viem';
+import { parseEther, isAddress, getAddress } from 'viem';
 import { isOutdoorActivity } from '@/services/weatherService';
 import { RivieraLogo } from './RivieraLogo';
 import { getExplorerTxUrl } from '@/config/avalanche';
+
+const DEFAULT_MERCHANT: `0x${string}` = '0x3685061A465FC913bb81cd090C9fF715Fa25ffA4';
+
+function resolveValidAddress(raw?: string): `0x${string}` {
+  if (!raw) return DEFAULT_MERCHANT;
+  try {
+    const trimmed = raw.trim();
+    if (isAddress(trimmed)) return getAddress(trimmed);
+    if (isAddress(trimmed.toLowerCase())) return getAddress(trimmed.toLowerCase());
+  } catch {
+    // fallback
+  }
+  return DEFAULT_MERCHANT;
+}
 
 interface ChatConciergeProps {
   onTicketGenerated: (ticket: VerifiableTicket) => void;
@@ -68,7 +82,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
         }
       }
 
-      const merchantAddress = (intent.merchantAddress as `0x${string}`) || '0x49c6d4Eb5e0988647E335F3f83ded44955E9FCFD';
+      const merchantAddress = resolveValidAddress(intent.merchantAddress);
 
       // 2. Request user's wallet signature & broadcast transaction on Avalanche C-Chain
       const txHash = await sendTransactionAsync({
@@ -224,7 +238,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
         const assistantMsg: ChatMessage = {
           id: `assistant-${Date.now()}`,
           sender: 'assistant',
-          text: `Disponibilità verificata per **${parsed.actionProposal.venueName}** (${parsed.actionProposal.date}).\nConsulta il riepilogo qui sotto per confermare:`,
+          text: `Disponibilità verificata per **${parsed.actionProposal.venueName}**:`,
           timestamp: Date.now(),
           actionProposal: parsed.actionProposal,
         };
@@ -266,7 +280,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
         timeSlot: 'Ore 20:30',
         guestCount,
         bookingType: option.bookingType,
-        merchantAddress: option.merchantAddress || '0x8b31a293A2613D0Ac354086E5d39A6f1E2c3008A',
+        merchantAddress: resolveValidAddress(option.merchantAddress),
         items: [
           {
             name: `${option.bookingType || 'Tavolo'} per ${guestCount} persone`,
@@ -280,7 +294,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
         calldataPreview: '0x...',
         contractTarget: RIVIERA_CONTRACTS.bookingEscrow,
         loyaltyCashbackAvax: 0,
-        explanation: `Disponibilità verificata per **${option.venueName || option.title}**. Firma la transazione nel tuo wallet per confermare la prenotazione.`,
+        explanation: `Disponibilità verificata per **${option.venueName || option.title}**.`,
         isOutdoor: isOutdoorActivity(actionType),
         groupId,
       };
@@ -288,7 +302,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
       const assistantMsg: ChatMessage = {
         id: `assistant-${Date.now()}`,
         sender: 'assistant',
-        text: `Ho verificato la disponibilità per **${option.venueName || option.title}** (${option.location}).\nConsulta la scheda sottostante e firma la transazione nel tuo wallet per confermare la prenotazione.`,
+        text: `Disponibilità verificata per **${option.venueName || option.title}**:`,
         timestamp: Date.now(),
         actionProposal: proposal,
       };

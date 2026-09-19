@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import jsQR from 'jsqr';
 import { VerifiableTicket } from '@/types';
 import { Venue } from '@/data/mockVenues';
 import { 
@@ -44,14 +45,51 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
   const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const scanLoopRef = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (scanLoopRef.current) {
+        cancelAnimationFrame(scanLoopRef.current);
+      }
     };
   }, []);
+
+  const scanQR = () => {
+    if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+      if (!canvasRef.current) {
+        canvasRef.current = document.createElement('canvas');
+      }
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      if (context) {
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'dontInvert',
+        });
+        
+        if (code && code.data) {
+          let query = code.data;
+          try {
+            const parsed = JSON.parse(code.data);
+            if (parsed.id) query = parsed.id;
+          } catch {}
+          processValidation(query);
+          stopCamera();
+          return;
+        }
+      }
+    }
+    scanLoopRef.current = requestAnimationFrame(scanQR);
+  };
 
   const startCamera = async () => {
     try {
@@ -62,7 +100,8 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          videoRef.current.play();
+          videoRef.current.play().catch(() => {});
+          scanLoopRef.current = requestAnimationFrame(scanQR);
         }
         setIsCameraActive(true);
       } else {
@@ -79,6 +118,10 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
+    }
+    if (scanLoopRef.current) {
+      cancelAnimationFrame(scanLoopRef.current);
+      scanLoopRef.current = null;
     }
     setIsCameraActive(false);
   };
@@ -118,11 +161,9 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     });
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!manualCodeInput.trim()) return;
-
-    const query = manualCodeInput.trim().toLowerCase();
+  const processValidation = (queryInput: string) => {
+    if (!queryInput.trim()) return;
+    const query = queryInput.trim().toLowerCase();
     
     // Search globally across ALL tickets first
     const matchedGlobal = tickets.find(
@@ -143,13 +184,18 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
       }
       
       handleValidate(matchedGlobal.ticketId);
-      setManualCodeInput('');
     } else {
       setFeedback({
         type: 'error',
-        title: `Nessun pass trovato per "${manualCodeInput}"`,
+        title: `Nessun pass trovato per "${queryInput}"`,
       });
     }
+  };
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    processValidation(manualCodeInput);
+    setManualCodeInput('');
   };
 
   const displayTickets = tickets.filter(t => {
@@ -292,8 +338,6 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
                     <div className="w-6 h-6 border-t-2 border-r-2 border-emerald-400 rounded-tr-lg" />
                   </div>
                   
-                  <div className="w-full h-0.5 bg-linear-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_8px_#34d399] animate-bounce" />
-
                   <div className="flex justify-between">
                     <div className="w-6 h-6 border-b-2 border-l-2 border-emerald-400 rounded-bl-lg" />
                     <div className="w-6 h-6 border-b-2 border-r-2 border-emerald-400 rounded-br-lg" />

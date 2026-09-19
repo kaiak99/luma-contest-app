@@ -126,7 +126,7 @@ export const ActionProposalCard: React.FC<ActionProposalCardProps> = ({
       <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
           <span className="w-2 h-2 rounded-full bg-[#E84142]" />
-          <span>Verifica Smart Contract Avalanche Fuji</span>
+          <span>Verifica Smart Contract Avalanche</span>
         </div>
 
         {walletAddress ? (

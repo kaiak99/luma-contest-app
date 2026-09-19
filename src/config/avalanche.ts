@@ -1,8 +1,8 @@
 export const AVALANCHE_CONFIG = {
-  chainId: 43113,
-  chainName: 'Avalanche Fuji Testnet',
-  rpcUrl: 'https://api.avax-test.network/ext/bc/C/rpc',
-  blockExplorerUrl: 'https://testnet.snowtrace.io',
+  chainId: 43114,
+  chainName: 'Avalanche C-Chain',
+  rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
+  blockExplorerUrl: 'https://snowtrace.io',
   currency: 'AVAX',
 };
 

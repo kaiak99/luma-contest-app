@@ -8,6 +8,8 @@ import { ActionProposalCard } from './ActionProposalCard';
 import { Send, Ticket as TicketIcon, MapPin, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useSendTransaction } from 'wagmi';
+import { parseEther } from 'viem';
 import { isOutdoorActivity } from '@/services/weatherService';
 import { RivieraLogo } from './RivieraLogo';
 
@@ -49,11 +51,20 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
     scrollToBottom();
   }, [messages, executingIntentId, isProcessing, processingStep]);
 
-  const simulateTransactionConfirmation = (intent: ParsedIntent) => {
-    setTimeout(() => {
-      const blockNumber = Math.floor(1000000 + Math.random() * 9000000);
-      const ticketId = `RIV-${blockNumber}-${Math.floor(100 + Math.random() * 900)}`;
-      const mockTxHash = `0x27ecb8f4ed780f2dcf7a3dfc7855b55f0c99f8e434f40f09a63c6c06a3809395`;
+  const { sendTransactionAsync } = useSendTransaction();
+
+  const executeRealTransaction = async (intent: ParsedIntent) => {
+    try {
+      const merchantAddress = (intent.merchantAddress as `0x${string}`) || '0x49c6d4Eb5e0988647E335F3f83ded44955E9FCFD';
+
+      // Request user's wallet signature & transaction broadcast on Avalanche C-Chain
+      const txHash = await sendTransactionAsync({
+        to: merchantAddress,
+        value: parseEther(DEPOSIT_AVAX),
+      });
+
+      const blockTimestamp = Date.now();
+      const ticketId = `RIV-${Math.floor(Date.now() / 1000).toString().slice(-4)}-${Math.floor(100 + Math.random() * 900)}`;
 
       const groupId = intent.guestCount >= 3
         ? `GRP-${Date.now().toString(36).toUpperCase()}`
@@ -61,14 +72,14 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
 
       const ticket: VerifiableTicket = {
         ticketId,
-        txHash: mockTxHash,
+        txHash,
         qrPayload: JSON.stringify({
           id: ticketId,
           venue: intent.venueName,
-          tx: mockTxHash,
+          tx: txHash,
           deposit: DEPOSIT_AVAX,
           holder: walletAddress,
-          block: blockNumber,
+          time: blockTimestamp,
           group: groupId,
         }),
         actionType: intent.type,
@@ -83,7 +94,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
         totalAvax: DEPOSIT_AVAX_NUMBER,
         totalEur: 0,
         depositAvax: DEPOSIT_AVAX_NUMBER,
-        issuedAt: Date.now(),
+        issuedAt: blockTimestamp,
         holderAddress: walletAddress || '',
         merchantAddress: intent.merchantAddress,
         isValidated: false,
@@ -104,14 +115,29 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
       const confirmMsg: ChatMessage = {
         id: `confirm-${Date.now()}`,
         sender: 'assistant',
-        text: `Prenotazione confermata per **${intent.venueName}** (Blocco Avalanche #${blockNumber}).\n\nIl pass con codice QR è stato registrato ed è pronto per l'accesso al locale.`,
+        text: `Transazione confermata su Avalanche!\nHash: **${txHash.slice(0, 10)}...${txHash.slice(-6)}**\n\nIl pass d'ingresso digitale per **${intent.venueName}** è stato emesso ed è disponibile nella scheda "I Miei Pass".`,
         timestamp: Date.now(),
         ticket,
       };
 
       setMessages(prev => [...prev, confirmMsg]);
+    } catch (err: any) {
+      console.error('Wallet transaction error:', err);
+      const isUserRejected = err?.name === 'UserRejectedRequestError' || err?.message?.toLowerCase().includes('reject');
+      const errText = isUserRejected
+        ? 'Richiesta di transazione annullata nel wallet.'
+        : `Errore transazione wallet: ${err?.shortMessage || err?.message || 'Verifica il saldo AVAX per il gas.'}`;
+
+      const errorMsg: ChatMessage = {
+        id: `error-${Date.now()}`,
+        sender: 'assistant',
+        text: errText,
+        timestamp: Date.now(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
+    } finally {
       setExecutingIntentId(null);
-    }, 2000);
+    }
   };
 
   const presetScenarios = [
@@ -255,7 +281,7 @@ export const ChatConcierge: React.FC<ChatConciergeProps> = ({
     }
 
     setExecutingIntentId(intent.id);
-    simulateTransactionConfirmation(intent);
+    await executeRealTransaction(intent);
   };
 
   return (

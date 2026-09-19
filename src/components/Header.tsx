@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Compass, Ticket as TicketIcon, ScanLine, LogOut } from 'lucide-react';
+import { Compass, Ticket as TicketIcon, LogOut } from 'lucide-react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { RivieraLogo } from './RivieraLogo';
 
@@ -78,14 +78,6 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
           </nav>
-        )}
-
-        {/* Merchant Indicator (Gestore) */}
-        {role === 'merchant' && (
-          <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-800 text-sm font-semibold border border-slate-200">
-            <ScanLine className="w-4 h-4 text-slate-600" />
-            <span>Postazione Check-in Esercente</span>
-          </div>
         )}
 
         {/* Right Section: Connect Wallet & Logout */}

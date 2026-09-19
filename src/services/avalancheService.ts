@@ -67,7 +67,7 @@ export class AvalancheService {
   public async ensureAvalancheNetwork(): Promise<void> {
     if (!this.isWalletAvailable()) return;
 
-    const avalancheChainIdHex = '0xa869'; // Avalanche Fuji (43113) for hackathon verification or 0xa86a for mainnet
+    const avalancheChainIdHex = '0xa86a'; // Avalanche C-Chain Mainnet (43114)
     try {
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
@@ -80,10 +80,10 @@ export class AvalancheService {
           params: [
             {
               chainId: avalancheChainIdHex,
-              chainName: 'Avalanche Fuji Testnet',
-              rpcUrls: ['https://api.avax-test.network/ext/bc/C/rpc'],
+              chainName: 'Avalanche C-Chain',
+              rpcUrls: ['https://api.avax.network/ext/bc/C/rpc'],
               nativeCurrency: { name: 'Avalanche', symbol: 'AVAX', decimals: 18 },
-              blockExplorerUrls: ['https://testnet.snowtrace.io'],
+              blockExplorerUrls: ['https://snowtrace.io'],
             },
           ],
         });

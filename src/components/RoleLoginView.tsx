@@ -58,7 +58,7 @@ export const RoleLoginView: React.FC<RoleLoginViewProps> = ({ onSelectRole }) =>
               </div>
               <div className="flex items-center gap-2.5 text-sm text-slate-700 font-medium">
                 <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Garanzie verificate su Avalanche Fuji</span>
+                <span>Garanzie verificate su Avalanche</span>
               </div>
             </div>
           </div>

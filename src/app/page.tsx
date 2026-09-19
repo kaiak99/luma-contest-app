@@ -167,13 +167,13 @@ export default function Home() {
           <div className="flex items-center gap-2 font-medium text-slate-800">
             <span>Riviera</span>
             <span>•</span>
-            <span>Protocollo di prenotazione verificato su Avalanche Fuji</span>
+            <span>Protocollo di prenotazione verificato su Avalanche</span>
           </div>
           <div className="flex items-center gap-4 text-slate-500 text-sm">
             <span>Pescara</span>
             <span>•</span>
             <a
-              href="https://testnet.snowtrace.io"
+              href="https://snowtrace.io"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#E84142] font-semibold hover:underline"

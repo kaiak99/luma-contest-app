@@ -22,7 +22,7 @@ export const MyTicketsView: React.FC<MyTicketsViewProps> = ({
         <div>
           <h2 className="text-2xl font-bold text-slate-900">I Miei Pass</h2>
           <p className="text-sm text-slate-600 mt-1 font-medium">
-            Biglietti e pass d&apos;ingresso registrati su Avalanche Fuji. Mostra il codice QR all&apos;arrivo.
+            Biglietti e pass d&apos;ingresso registrati su Avalanche. Mostra il codice QR all&apos;arrivo.
           </p>
         </div>
 

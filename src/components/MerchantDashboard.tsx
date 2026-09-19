@@ -167,7 +167,9 @@ export const MerchantDashboard: React.FC<MerchantDashboardProps> = ({
     
     // Search globally across ALL tickets first
     const matchedGlobal = tickets.find(
-      t => t.ticketId.toLowerCase().includes(query) || t.qrPayload.toLowerCase().includes(query)
+      t => t.ticketId.toLowerCase().includes(query) || 
+           t.qrPayload.toLowerCase().includes(query) ||
+           query.includes(t.ticketId.toLowerCase()) // Fallback: if the raw QR string contains the ticket ID
     );
 
     if (matchedGlobal) {

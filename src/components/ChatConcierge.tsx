@@ -1,0 +1,412 @@
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { ChatMessage, ParsedIntent, VerifiableTicket, SuggestionOption, ActionType } from '@/types';
+import { parseNaturalLanguageIntent } from '@/services/aiIntentParser';
+import { RIVIERA_CONTRACTS, DEPOSIT_AVAX, DEPOSIT_AVAX_NUMBER } from '@/config/avalanche';
+import { ActionProposalCard } from './ActionProposalCard';
+import { Send, Ticket as TicketIcon, MapPin, ArrowRight } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { isOutdoorActivity } from '@/services/weatherService';
+import { RivieraLogo } from './RivieraLogo';
+
+interface ChatConciergeProps {
+  onTicketGenerated: (ticket: VerifiableTicket) => void;
+  onOpenTicket: (ticket: VerifiableTicket) => void;
+  walletAddress: string | null;
+  onOpenWalletModal?: () => void;
+}
+
+export const ChatConcierge: React.FC<ChatConciergeProps> = ({
+  onTicketGenerated,
+  onOpenTicket,
+  walletAddress,
+  onOpenWalletModal,
+}) => {
+  const { openConnectModal } = useConnectModal();
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'welcome',
+      sender: 'assistant',
+      text: 'Benvenuto al Desk Riviera per Pescara.\nIndica il locale, ristorante o attività che desideri prenotare. Riceverai un pass digitale onchain con codice QR valido per l\'ingresso e il tavolo riservato.',
+      timestamp: Date.now(),
+    },
+  ]);
+
+  const [inputQuery, setInputQuery] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState(0);
+  const [executingIntentId, setExecutingIntentId] = useState<string | null>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, executingIntentId, isProcessing, processingStep]);
+
+  const simulateTransactionConfirmation = (intent: ParsedIntent) => {
+    setTimeout(() => {
+      const blockNumber = Math.floor(1000000 + Math.random() * 9000000);
+      const ticketId = `RIV-${blockNumber}-${Math.floor(100 + Math.random() * 900)}`;
+      const mockTxHash = `0x27ecb8f4ed780f2dcf7a3dfc7855b55f0c99f8e434f40f09a63c6c06a3809395`;
+
+      const groupId = intent.guestCount >= 3
+        ? `GRP-${Date.now().toString(36).toUpperCase()}`
+        : undefined;
+
+      const ticket: VerifiableTicket = {
+        ticketId,
+        txHash: mockTxHash,
+        qrPayload: JSON.stringify({
+          id: ticketId,
+          venue: intent.venueName,
+          tx: mockTxHash,
+          deposit: DEPOSIT_AVAX,
+          holder: walletAddress,
+          block: blockNumber,
+          group: groupId,
+        }),
+        actionType: intent.type,
+        title: intent.title,
+        venueName: intent.venueName,
+        venueLocation: intent.venueLocation,
+        date: intent.date,
+        timeSlot: intent.timeSlot,
+        guestCount: intent.guestCount,
+        bookingType: intent.bookingType,
+        items: intent.items,
+        totalAvax: DEPOSIT_AVAX_NUMBER,
+        totalEur: 0,
+        depositAvax: DEPOSIT_AVAX_NUMBER,
+        issuedAt: Date.now(),
+        holderAddress: walletAddress || '',
+        merchantAddress: intent.merchantAddress,
+        isValidated: false,
+        weatherClause: isOutdoorActivity(intent.type),
+        weatherInfo: intent.weatherInfo,
+        groupId,
+        groupMembers: groupId ? [walletAddress || ''] : undefined,
+      };
+
+      confetti({
+        particleCount: 60,
+        spread: 60,
+        origin: { y: 0.6 },
+      });
+
+      onTicketGenerated(ticket);
+
+      const confirmMsg: ChatMessage = {
+        id: `confirm-${Date.now()}`,
+        sender: 'assistant',
+        text: `Prenotazione confermata per **${intent.venueName}** (Blocco Avalanche #${blockNumber}).\n\nIl pass con codice QR è stato registrato ed è pronto per l'accesso al locale.`,
+        timestamp: Date.now(),
+        ticket,
+      };
+
+      setMessages(prev => [...prev, confirmMsg]);
+      setExecutingIntentId(null);
+    }, 2000);
+  };
+
+  const presetScenarios = [
+    {
+      label: 'Cena per 2 stasera (Pizzeria Da Giampiero)',
+      query: 'Vorrei prenotare un tavolo per cena per 2 persone stasera alla Pizzeria Da Giampiero',
+    },
+    {
+      label: 'Pranzo di pesce sul mare (Lido Moby Dick)',
+      query: 'Prenota un tavolo per 4 persone per pranzo al Lido Moby Dick',
+    },
+    {
+      label: 'Partita Padel Pescara (4 giocatori)',
+      query: 'Vorrei prenotare un campo da padel per 4 persone alle 19',
+    },
+    {
+      label: 'Aperitivo al tramonto per 3',
+      query: 'Vorrei riservare un tavolo aperitivo al tramonto vista mare per 3 persone',
+    },
+    {
+      label: 'Noleggio E-Bike Via Verde',
+      query: 'Vorrei noleggiare 2 e-bike per percorrere la costa',
+    },
+  ];
+
+  const handleSend = (textToSend?: string) => {
+    const text = textToSend || inputQuery;
+    if (!text.trim() || isProcessing) return;
+
+    const userMsg: ChatMessage = {
+      id: `user-${Date.now()}`,
+      sender: 'user',
+      text: text.trim(),
+      timestamp: Date.now(),
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    if (!textToSend) setInputQuery('');
+    setIsProcessing(true);
+    setProcessingStep(0);
+
+    setTimeout(() => {
+      const parsed = parseNaturalLanguageIntent(text);
+
+      if (parsed.options && parsed.options.length > 0) {
+        const assistantMsg: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          sender: 'assistant',
+          text: `Ecco le strutture disponibili a Pescara per la tua richiesta:`,
+          timestamp: Date.now(),
+          options: parsed.options,
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+        setIsProcessing(false);
+      } else if (parsed.actionProposal) {
+        const assistantMsg: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          sender: 'assistant',
+          text: `Disponibilità verificata per **${parsed.actionProposal.venueName}** (${parsed.actionProposal.date}).\nConsulta il riepilogo qui sotto per confermare:`,
+          timestamp: Date.now(),
+          actionProposal: parsed.actionProposal,
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+        setIsProcessing(false);
+      } else {
+        const assistantMsg: ChatMessage = {
+          id: `assistant-${Date.now()}`,
+          sender: 'assistant',
+          text: parsed.text || 'Non ho trovato locali corrispondenti. Puoi provare a cercare pizzerie, ristoranti sul mare o lidi a Pescara.',
+          timestamp: Date.now(),
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+        setIsProcessing(false);
+      }
+    }, 900);
+  };
+
+  const handleSelectOption = (option: SuggestionOption) => {
+    if (option.actionPrompt) {
+      handleSend(option.actionPrompt);
+      return;
+    }
+
+    setIsProcessing(true);
+
+    setTimeout(() => {
+      const actionType: ActionType = 'dining_reservation';
+      const guestCount = 2;
+      const groupId = guestCount >= 3 ? `GRP-${Date.now().toString(36).toUpperCase()}` : undefined;
+
+      const proposal: ParsedIntent = {
+        id: `intent-${Date.now()}`,
+        type: actionType,
+        title: `Prenotazione: ${option.venueName || option.title}`,
+        venueName: option.venueName || option.title,
+        venueLocation: option.location,
+        date: 'Stasera (19 Settembre)',
+        timeSlot: 'Ore 20:30',
+        guestCount,
+        bookingType: option.bookingType,
+        merchantAddress: option.merchantAddress || '0x8b31a293A2613D0Ac354086E5d39A6f1E2c3008A',
+        items: [
+          {
+            name: `${option.bookingType || 'Tavolo riservato'} per ${guestCount} persone`,
+            quantity: 1,
+          },
+        ],
+        totalEur: 0,
+        totalAvax: DEPOSIT_AVAX_NUMBER,
+        depositAvax: DEPOSIT_AVAX_NUMBER,
+        onchainMethod: 'registraPrenotazione()',
+        calldataPreview: '0x...',
+        contractTarget: RIVIERA_CONTRACTS.bookingEscrow,
+        loyaltyCashbackAvax: 0,
+        explanation: `Disponibilità confermata per **${option.venueName || option.title}** per stasera alle 20:30.`,
+        isOutdoor: isOutdoorActivity(actionType),
+        groupId,
+      };
+
+      const assistantMsg: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        sender: 'assistant',
+        text: `Ho predisposto la scheda per **${option.venueName || option.title}** (${option.location}). Conferma per ricevere il pass d'ingresso.`,
+        timestamp: Date.now(),
+        actionProposal: proposal,
+      };
+
+      setMessages(prev => [...prev, assistantMsg]);
+      setIsProcessing(false);
+    }, 700);
+  };
+
+  const handleExecuteAction = async (intent: ParsedIntent) => {
+    if (!walletAddress) {
+      if (openConnectModal) {
+        openConnectModal();
+      } else if (onOpenWalletModal) {
+        onOpenWalletModal();
+      }
+      return;
+    }
+
+    setExecutingIntentId(intent.id);
+    simulateTransactionConfirmation(intent);
+  };
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col h-[740px] overflow-hidden">
+      {/* Messages area */}
+      <div className="flex-1 p-6 overflow-y-auto space-y-5">
+        {messages.map(msg => (
+          <div
+            key={msg.id}
+            className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
+          >
+            {msg.sender === 'assistant' && (
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">
+                <RivieraLogo size={20} />
+                <span>Desk Riviera</span>
+              </div>
+            )}
+
+            <div
+              className={`max-w-xl px-5 py-3.5 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
+                msg.sender === 'user'
+                  ? 'bg-slate-900 text-white rounded-tr-xs'
+                  : 'bg-slate-100 text-slate-800 rounded-tl-xs border border-slate-200'
+              }`}
+              dangerouslySetInnerHTML={{
+                __html: msg.text
+                  .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                  .replace(/\*(.*?)\*/g, '<em>$1</em>'),
+              }}
+            />
+
+            {/* Suggestions list */}
+            {msg.options && msg.options.length > 0 && (
+              <div className="mt-3 w-full max-w-xl space-y-3">
+                <div className="text-xs font-bold uppercase text-slate-400 tracking-wider px-1">
+                  Opzioni Disponibili
+                </div>
+                {msg.options.map(option => (
+                  <div
+                    key={option.id}
+                    className="bg-white border border-slate-200 hover:border-slate-400 rounded-2xl p-4 transition-all shadow-2xs flex flex-col sm:flex-row gap-3"
+                  >
+                    <div className="flex-1 space-y-1">
+                      <h4 className="font-bold text-base text-slate-900 leading-tight">
+                        {option.title}
+                      </h4>
+                      <p className="text-xs text-slate-500 flex items-center gap-1 font-medium">
+                        <MapPin className="w-3.5 h-3.5" /> {option.location}
+                      </p>
+                      <p className="text-sm text-slate-600 leading-snug pt-1">
+                        {option.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-800">
+                        {option.bookingType || 'Disponibile'}
+                      </span>
+                      <button
+                        onClick={() => handleSelectOption(option)}
+                        className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        <span>Seleziona</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Onchain Proposal Card */}
+            {msg.actionProposal && (
+              <div className="mt-4 w-full max-w-xl">
+                <ActionProposalCard
+                  intent={msg.actionProposal}
+                  onExecute={handleExecuteAction}
+                  isExecuting={executingIntentId === msg.actionProposal.id}
+                  walletAddress={walletAddress}
+                  onOpenWalletModal={onOpenWalletModal}
+                />
+              </div>
+            )}
+
+            {/* View ticket button */}
+            {msg.ticket && (
+              <div className="mt-3">
+                <button
+                  onClick={() => onOpenTicket(msg.ticket!)}
+                  className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-sm transition-colors cursor-pointer"
+                >
+                  <TicketIcon className="w-4 h-4 text-emerald-400" />
+                  <span>Visualizza Pass QR ({msg.ticket.ticketId.split('-').slice(0, 2).join('-')})</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {isProcessing && (
+          <div className="flex items-center gap-3 text-sm text-slate-700 bg-slate-50 border border-slate-200 px-4 py-3 rounded-2xl w-fit">
+            <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin shrink-0" />
+            <span className="font-semibold text-xs text-slate-700">Verifica disponibilità a Pescara in corso...</span>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Preset scenario prompt chips */}
+      <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 overflow-x-auto">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-400 shrink-0 uppercase tracking-wider">
+            Consigliati:
+          </span>
+          {presetScenarios.map((sc, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleSend(sc.query)}
+              className="text-xs bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 px-3.5 py-1.5 rounded-xl font-semibold shrink-0 transition-colors cursor-pointer shadow-2xs"
+            >
+              {sc.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Input query field */}
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          handleSend();
+        }}
+        className="p-4 border-t border-slate-200 bg-white flex items-center gap-3"
+      >
+        <input
+          type="text"
+          value={inputQuery}
+          onChange={e => setInputQuery(e.target.value)}
+          placeholder="Cerca locale o ristorante... (es. Pizzeria Da Giampiero, Lido Moby Dick)"
+          className="flex-1 text-sm text-slate-900 bg-slate-100 focus:bg-white border border-slate-200 focus:border-slate-400 rounded-2xl px-5 py-3.5 focus:outline-hidden transition-all"
+        />
+        <button
+          type="submit"
+          disabled={!inputQuery.trim() || isProcessing}
+          className="bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white px-5 py-3.5 rounded-2xl font-bold transition-all cursor-pointer shadow-xs flex items-center gap-2"
+        >
+          <span className="text-sm hidden sm:inline">Cerca</span>
+          <Send className="w-4 h-4" />
+        </button>
+      </form>
+    </div>
+  );
+};
